@@ -11,6 +11,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from pyquery import PyQuery as pq
 import pymongo
+from selenium.webdriver.chrome.options import Options
+
 
 # MongoDB的url
 MONGO_URL = 'localhost'
@@ -19,13 +21,22 @@ MONGO_DB = 'taobao'
 # MongoDB的表名
 MONGO_TABLE = 'product'
 
+# chromedriver是chrome浏览器的命令行模式，不带图形界面，已安装chromedriver的用下面代码
+# chrome_options = Options()
+# chrome_options.add_argument('--headless')
+# chrome_options.add_argument('--disable-gpu')
+# browser = webdriver.Chrome(chrome_options=chrome_options)
+
+# 没安装chromedriver的用下面代码，可看到浏览器相关动作，性能较差
 browser = webdriver.Chrome()
+
 wait = WebDriverWait(browser, 10)
 client = pymongo.MongoClient(MONGO_URL)
 db = client[MONGO_DB]
 
 
 def search(keywork):
+    print('正在搜索')
     """
     检索
     """
@@ -49,6 +60,7 @@ def search(keywork):
 
 
 def next_page(page_number):
+    print('正在翻到第', page_number, '页')
     """
     翻页
     :param page_number: 页码
@@ -121,16 +133,21 @@ def save_image(content):
 
 
 def main():
-    keyword = sys.argv[1]
-    if len(keyword) <= 0:
-        return None
-    else:
-        # 关键词总页数
-        total = search(keyword)
-        total = int(re.compile('(\d+)').search(total).group(1))
-        for i in range(2, total+1):
-            next_page(i)
-    browser.quit()
+    try:
+        keyword = sys.argv[1]
+        if len(keyword) <= 0:
+            return None
+        else:
+            # 关键词总页数
+            total = search(keyword)
+            total = int(re.compile('(\d+)').search(total).group(1))
+            print('该关键词共有', total+1, '页')
+            for i in range(2, total+1):
+                next_page(i)
+    except Exception:
+        print('出错了')
+    finally:
+        browser.close()
 
 
 if __name__ == '__main__':
